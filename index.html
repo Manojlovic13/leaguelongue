@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LeagueLongue — A social layer for your fantasy basketball league</title>
+<meta name="description" content="LeagueLongue is an early-stage, non-commercial web app that adds matchups, discussions, reactions and predictions on top of your own Yahoo Fantasy NBA league. Read-only API access, built by an independent developer." />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="LeagueLongue — A social layer for your fantasy basketball league" />
+<meta property="og:description" content="An early-stage, non-commercial web app that adds community features on top of your own Yahoo Fantasy NBA league. Independent project, not affiliated with Yahoo or the NBA." />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='29' fill='%23E2571F'/%3E%3Cpath d='M3 32h58M32 3v58M12 12c11 11 11 29 0 40M52 12c-11 11-11 29 0 40' stroke='%23fff' stroke-width='4' fill='none'/%3E%3C/svg%3E" />
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #FAF7F2;
+    --surface: #FFFFFF;
+    --surface-accent: #FDF0E7;
+    --text: #221E1A;
+    --text-muted: #5C554D;
+    --border: #E7E0D6;
+    --accent: #C2410C;
+    --accent-strong: #9A3412;
+    --accent-soft: #F5E3D7;
+    --focus: #C2410C;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #171412;
+      --surface: #201C18;
+      --surface-accent: #2A211A;
+      --text: #F2EEE8;
+      --text-muted: #A79E93;
+      --border: #362F28;
+      --accent: #F97C3A;
+      --accent-strong: #FBA36E;
+      --accent-soft: #33261C;
+      --focus: #F97C3A;
+    }
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,
+      "Apple Color Emoji", "Segoe UI Emoji";
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    color: var(--accent);
+  }
+
+  a:hover {
+    color: var(--accent-strong);
+  }
+
+  :is(a, button):focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    background: var(--accent);
+    color: #fff;
+    padding: 0.6rem 1rem;
+    border-radius: 0 0 8px 0;
+    z-index: 10;
+  }
+
+  .skip-link:focus-visible {
+    left: 0;
+  }
+
+  .container {
+    max-width: 62rem;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+
+  /* ---------- Header ---------- */
+  .site-header {
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .site-header .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.9rem;
+  }
+
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: -0.01em;
+  }
+
+  .wordmark svg {
+    flex: none;
+  }
+
+  .header-note {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    padding-block: 4.5rem 3rem;
+    background:
+      radial-gradient(60rem 24rem at 50% -8rem, var(--accent-soft), transparent 70%);
+    text-align: center;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+    background: var(--surface-accent);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.3rem 0.9rem;
+    margin-bottom: 1.4rem;
+  }
+
+  .badge .dot {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-right: 0.45rem;
+    vertical-align: 1px;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.4rem, 6vw, 3.6rem);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    font-weight: 800;
+  }
+
+  .hero .tagline {
+    font-size: clamp(1.15rem, 2.5vw, 1.45rem);
+    color: var(--text-muted);
+    max-width: 34rem;
+    margin: 1.1rem auto 0;
+  }
+
+  .hero-disclaimer {
+    margin-top: 2.2rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    max-width: 30rem;
+    margin-inline: auto;
+  }
+
+  /* ---------- Sections ---------- */
+  section {
+    padding-block: 3.25rem;
+  }
+
+  section + section {
+    border-top: 1px solid var(--border);
+  }
+
+  .section-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+
+  h2 {
+    font-size: clamp(1.5rem, 3.5vw, 1.9rem);
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    margin-bottom: 1rem;
+  }
+
+  .prose {
+    max-width: 42rem;
+    color: var(--text-muted);
+    font-size: 1.05rem;
+  }
+
+  .prose strong {
+    color: var(--text);
+  }
+
+  /* ---------- Features ---------- */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 1rem;
+    margin-top: 1.75rem;
+  }
+
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.3rem 1.3rem 1.4rem;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+
+  .feature-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .feature-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    margin-bottom: 0.9rem;
+  }
+
+  .feature-card h3 {
+    font-size: 1.02rem;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.3rem;
+  }
+
+  .feature-card p {
+    font-size: 0.92rem;
+    color: var(--text-muted);
+  }
+
+  /* ---------- Steps ---------- */
+  .steps {
+    list-style: none;
+    counter-reset: step;
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.75rem;
+    max-width: 42rem;
+  }
+
+  .steps li {
+    counter-increment: step;
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.1rem 1.2rem 1.1rem 3.8rem;
+  }
+
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 1.15rem;
+    top: 1.15rem;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .steps h3 {
+    font-size: 1.02rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .steps p {
+    font-size: 0.92rem;
+    color: var(--text-muted);
+  }
+
+  /* ---------- Privacy list ---------- */
+  .privacy-list {
+    list-style: none;
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    max-width: 46rem;
+  }
+
+  .privacy-list li {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+  }
+
+  .privacy-list li strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .privacy-list .check {
+    flex: none;
+    color: var(--accent);
+    margin-top: 2px;
+  }
+
+  /* ---------- Status / Contact ---------- */
+  .status-card {
+    background: var(--surface-accent);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    max-width: 42rem;
+  }
+
+  .status-card p {
+    color: var(--text-muted);
+  }
+
+  .contact-card {
+    max-width: 42rem;
+  }
+
+  .contact-card .email-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 1.05rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.8rem 1.2rem;
+    margin-top: 0.5rem;
+    text-decoration: none;
+  }
+
+  .contact-card .email-link:hover {
+    border-color: var(--accent);
+  }
+
+  /* ---------- Footer ---------- */
+  .site-footer {
+    border-top: 1px solid var(--border);
+    padding-block: 2.2rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .site-footer .container {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .footer-disclaimer {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  @media (max-width: 480px) {
+    .hero {
+      padding-block: 3.25rem 2.25rem;
+    }
+
+    section {
+      padding-block: 2.5rem;
+    }
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="container">
+    <a class="wordmark" href="#top" aria-label="LeagueLongue home">
+      <svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <circle cx="32" cy="32" r="29" fill="var(--accent)" />
+        <path d="M3 32h58M32 3v58M12 12c11 11 11 29 0 40M52 12c-11 11-11 29 0 40" stroke="var(--bg)" stroke-width="4" fill="none" />
+      </svg>
+      LeagueLongue
+    </a>
+    <span class="header-note">Independent project &middot; in design</span>
+  </div>
+</header>
+
+<main id="main">
+  <!-- 1. Hero -->
+  <section class="hero" id="top" aria-labelledby="hero-title">
+    <div class="container">
+      <p class="badge"><span class="dot" aria-hidden="true"></span>Early stage &middot; in design</p>
+      <h1 id="hero-title">LeagueLongue</h1>
+      <p class="tagline">A social layer for your fantasy basketball league.</p>
+      <p class="hero-disclaimer">
+        Independent project. Not affiliated with, endorsed by, or sponsored by Yahoo or the NBA.
+      </p>
+    </div>
+  </section>
+
+  <!-- 2. What it is -->
+  <section aria-labelledby="about-title">
+    <div class="container">
+      <span class="section-label" aria-hidden="true">What it is</span>
+      <h2 id="about-title">What it is</h2>
+      <p class="prose">
+        LeagueLongue is a web app that adds community features on top of the
+        <strong>Yahoo Fantasy NBA</strong> leagues you already play in. Instead of switching
+        between the Yahoo game and a group chat, your league gets one place to see matchups,
+        discuss them, and predict results. It is a non-commercial project built by an
+        independent developer, currently in the requirements and design phase.
+      </p>
+    </div>
+  </section>
+
+  <!-- 3. Planned features -->
+  <section aria-labelledby="features-title">
+    <div class="container">
+      <span class="section-label" aria-hidden="true">Planned features</span>
+      <h2 id="features-title">Planned features</h2>
+      <p class="prose">These are planned for the first version &mdash; nothing is live yet.</p>
+      <div class="features">
+        <article class="feature-card">
+          <span class="feature-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M12 4v6M7 15h4M7 17.5h4"/></svg>
+          </span>
+          <h3>Live league matchups</h3>
+          <p>See all matchups in your league in one place.</p>
+        </article>
+
+        <article class="feature-card">
+          <span class="feature-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-8 8H5l-2 2V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8z"/><path d="M8 11h8M8 15h5"/></svg>
+          </span>
+          <h3>Matchup discussion</h3>
+          <p>Comment on each matchup.</p>
+        </article>
+
+        <article class="feature-card">
+          <span class="feature-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/></svg>
+          </span>
+          <h3>Reactions</h3>
+          <p>React to matchups.</p>
+        </article>
+
+        <article class="feature-card">
+          <span class="feature-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>
+          </span>
+          <h3>Predictions</h3>
+          <p>Predict the winner of each matchup.</p>
+        </article>
+
+        <article class="feature-card">
+          <span class="feature-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><path d="M8.5 14 7 22l5-3 5 3-1.5-8"/></svg>
+          </span>
+          <h3>Prediction badges</h3>
+          <p>Earn profile badges for correct predictions.</p>
+        </article>
+
+        <article class="feature-card">
+          <span class="feature-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6.5 8-6.5s8 2.5 8 6.5"/></svg>
+          </span>
+          <h3>Player pages</h3>
+          <p>Browse all players in your league, comment on a player and on a player's performance.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. How it works -->
+  <section aria-labelledby="how-title">
+    <div class="container">
+      <span class="section-label" aria-hidden="true">How it works</span>
+      <h2 id="how-title">How it works</h2>
+      <ol class="steps">
+        <li>
+          <h3>Sign in with Yahoo</h3>
+          <p>Use your own Yahoo account via OAuth 2.0. LeagueLongue never sees your password.</p>
+        </li>
+        <li>
+          <h3>See your league's live matchups</h3>
+          <p>Your leagues and their weekly matchups, all in one view.</p>
+        </li>
+        <li>
+          <h3>Comment, react and predict</h3>
+          <p>Discuss matchups, react, and predict winners to earn badges.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 5. Data and privacy -->
+  <section aria-labelledby="privacy-title">
+    <div class="container">
+      <span class="section-label" aria-hidden="true">Data &amp; privacy</span>
+      <h2 id="privacy-title">Data and privacy</h2>
+      <ul class="privacy-list">
+        <li>
+          <span class="check" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </span>
+          <span><strong>Read-only access.</strong> LeagueLongue uses the Yahoo Fantasy Sports API in read-only mode.</span>
+        </li>
+        <li>
+          <span class="check" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </span>
+          <span><strong>Your account, your data.</strong> Users sign in with their own Yahoo account via OAuth 2.0.</span>
+        </li>
+        <li>
+          <span class="check" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </span>
+          <span><strong>Members only.</strong> Only leagues the signed-in user belongs to are accessed, and league data is shown only to members of that same league.</span>
+        </li>
+        <li>
+          <span class="check" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </span>
+          <span><strong>What is read:</strong> your leagues, league settings and standings, weekly matchups/scoreboard, team rosters, and player info and stats.</span>
+        </li>
+        <li>
+          <span class="check" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </span>
+          <span><strong>User-generated content is stored here.</strong> Comments, reactions, predictions and badges are stored by this project, not by Yahoo.</span>
+        </li>
+        <li>
+          <span class="check" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </span>
+          <span><strong>Responsible use.</strong> Yahoo data is cached responsibly, rate limits are respected, and Yahoo data is never sold or redistributed.</span>
+        </li>
+        <li>
+          <span class="check" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </span>
+          <span><strong>No write access.</strong> LeagueLongue never changes rosters, trades, or lineups.</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 6. Project status -->
+  <section aria-labelledby="status-title">
+    <div class="container">
+      <span class="section-label" aria-hidden="true">Project status</span>
+      <h2 id="status-title">Project status</h2>
+      <div class="status-card">
+        <p>
+          LeagueLongue is in the requirements and design phase. It is not yet released, and
+          there is nothing to sign up for yet. Mockups or a feature specification are
+          available on request &mdash; just get in touch.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Contact -->
+  <section aria-labelledby="contact-title">
+    <div class="container contact-card">
+      <span class="section-label" aria-hidden="true">Contact</span>
+      <h2 id="contact-title">Get in touch</h2>
+      <p class="prose">
+        Questions, feedback, or a request for the design spec? Email the developer,
+        Du&scaron;an Manojlovi&#263;:
+      </p>
+      <a class="email-link" href="mailto:manojlovic.dusann@gmail.com">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6L22 7"/></svg>
+        manojlovic.dusann@gmail.com
+      </a>
+    </div>
+  </section>
+</main>
+
+<!-- 8. Footer -->
+<footer class="site-footer">
+  <div class="container">
+    <p class="footer-disclaimer">
+      Independent project. Not affiliated with, endorsed by, or sponsored by Yahoo or the NBA.
+    </p>
+    <p>&copy; 2026 Du&scaron;an Manojlovi&#263;</p>
+    <p>Yahoo and NBA are trademarks of their respective owners.</p>
+  </div>
+</footer>
+</body>
+</html>
